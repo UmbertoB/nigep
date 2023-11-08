@@ -16,7 +16,7 @@ def noise_datasets_already_exists():
     noise_levels = [0] + [i / 10 for i in range(1, 10)]
     for noise_level in noise_levels:
         folder_name = f"noise_{noise_level}"
-        folder_path = os.path.join('./dataset', folder_name)
+        folder_path = os.path.join('../../dataset', folder_name)
 
         if not os.path.exists(folder_path):
             return False

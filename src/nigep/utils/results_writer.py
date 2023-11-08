@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from utils.consts import results_columns
-from utils.functions import isfloat
-from utils.mkdir_folders import mkdir_output
+from src.nigep.utils.consts import results_columns
+from src.nigep.utils.functions import isfloat
+from src.nigep.utils.mkdir_folders import mkdir_output
 
 
 class ResultsWriter:

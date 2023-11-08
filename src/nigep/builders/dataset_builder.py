@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from skimage.util import random_noise
 
-from utils.mkdir_folders import mkdir_dataset
+from src.nigep.utils.mkdir_folders import mkdir_dataset
 
 
 def __write_images(dataset_name, noise_amount, image_path_arr):
