@@ -1,22 +1,22 @@
-import os.path
+import os
 import traceback
 
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 
-from builders import model_builder
-from builders.dataset_builder import generate_dataset
-from builders.image_generator_builder import get_train_generator, get_test_generator
-from builders.metrics_builder import generate_confusion_matrix, generate_classification_report
-from utils.consts import NOISE_LEVELS
-from utils.results_writer import ResultsWriter
+from .builders import model_builder
+from .builders.dataset_builder import generate_dataset
+from .builders.image_generator_builder import get_train_generator, get_test_generator
+from .builders.metrics_builder import generate_confusion_matrix, generate_classification_report
+from .utils.consts import NOISE_LEVELS
+from .utils.results_writer import ResultsWriter
 
 
 def noise_datasets_already_exists():
     noise_levels = [0] + [i / 10 for i in range(1, 10)]
     for noise_level in noise_levels:
         folder_name = f"noise_{noise_level}"
-        folder_path = os.path.join('../../dataset', folder_name)
+        folder_path = os.path.join(f'{os.getcwd()}/dataset', folder_name)
 
         if not os.path.exists(folder_path):
             return False
@@ -24,7 +24,7 @@ def noise_datasets_already_exists():
     return True
 
 
-class Nid:
+class Nigep:
 
     def __init__(self, execution_name: str, model: Sequential, batch_size: int, x_data, y_data, k_fold_n=5):
         self.execution_name = execution_name
