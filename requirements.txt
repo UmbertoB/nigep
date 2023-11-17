@@ -8,5 +8,4 @@ matplotlib
 keras
 seaborn
 matplotlib
-unittest
 coverage

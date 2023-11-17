@@ -19,3 +19,11 @@ def mkdir_output():
 
     except FileExistsError:
         pass
+
+
+def get_directory_name(name, x=0):
+    dir_name = (name + (' ' + str(x) if x != 0 else '')).strip()
+    if not os.path.exists(dir_name):
+        return dir_name
+    else:
+        return get_directory_name(name, x + 1)

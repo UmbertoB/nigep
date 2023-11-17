@@ -2,7 +2,7 @@ import pandas as pd
 from keras.preprocessing.image import ImageDataGenerator
 
 
-def get_train_generator(x, y, noise, train_index):
+def get_train_generator(x, y, noise, train_index, batch_size, class_mode, input_shape):
     x = list(map(lambda p: p.replace('default', f'noise_{noise}'), x))
     df = pd.DataFrame({'images': x})
     x = df['images']
@@ -23,9 +23,9 @@ def get_train_generator(x, y, noise, train_index):
         dataframe=df_train,
         x_col='id',
         y_col='label',
-        batch_size=30,
-        target_size=(200, 200),
-        class_mode='binary',
+        batch_size=batch_size,
+        target_size=input_shape,
+        class_mode=class_mode,
         shuffle=False,
         subset='training')
 
@@ -33,16 +33,16 @@ def get_train_generator(x, y, noise, train_index):
         dataframe=df_train,
         x_col='id',
         y_col='label',
-        batch_size=30,
-        target_size=(200, 200),
-        class_mode='binary',
+        batch_size=batch_size,
+        target_size=input_shape,
+        class_mode=class_mode,
         shuffle=False,
         subset='validation')
 
     return train_generator, validation_generator
 
 
-def get_test_generator(x, y, noise, test_index):
+def get_test_generator(x, y, noise, test_index, batch_size, class_mode, input_shape):
     x = list(map(lambda p: p.replace('default', f'noise_{noise}'), x))
     df = pd.DataFrame({'images': x})
     x = df['images']
@@ -57,9 +57,9 @@ def get_test_generator(x, y, noise, test_index):
         dataframe=df_test,
         x_col='id',
         y_col='label',
-        batch_size=30,
-        target_size=(200, 200),
-        class_mode='binary',
+        batch_size=batch_size,
+        target_size=input_shape,
+        class_mode=class_mode,
         shuffle=False)
 
     return test_generator

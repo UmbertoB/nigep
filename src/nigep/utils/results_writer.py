@@ -1,20 +1,20 @@
 import os
+import re
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from .consts import results_columns
-from .functions import isfloat
-from .mkdir_folders import mkdir_output
+from .functions import get_results_columns
+from .mkdir_folders import mkdir_output, get_directory_name
 
 
 class ResultsWriter:
 
     def __init__(self, name):
         mkdir_output()
-        self.execution_folder_path = f'{os.getcwd()}/output/{name}'
+        self.execution_folder_path = get_directory_name(f'{os.getcwd()}/output/{name}')
         os.mkdir(self.execution_folder_path)
         self.results_folder = '/'
         self.results_name = name
@@ -24,28 +24,53 @@ class ResultsWriter:
         df.drop('Unnamed: 0', axis=1, inplace=True)
         return df
 
-    def __generate_results_csv(self):
-        pd.DataFrame(columns=results_columns).to_csv(self.results_folder + f'/results_{self.results_name}.csv')
+    def __generate_results_csv(self, target_names):
+        pd.DataFrame(columns=get_results_columns(target_names)).to_csv(self.results_folder + f'/results_{self.results_name}.csv')
 
-    def write_metrics_results(self, model_name, train_dataset_noise, test_dataset_noise, cr, cm):
+    def write_metrics_results(self, train_noise, test_noise, cr, cm, target_names):
         if not os.path.isfile(self.results_folder + f'/results_{self.results_name}.csv'):
-            self.__generate_results_csv()
+            self.__generate_results_csv(target_names)
 
-        df = self.__generate_df_by_csv()
-        split_string = [x.split(' ') for x in cr.split('\n')]
-        only_values_list = []
-        for row in split_string:
-            only_values_list.append(list(filter((lambda x: isfloat(x)), row)))
-        values = list(filter((lambda x: len(x) > 0), only_values_list))
+        current_df = self.__generate_df_by_csv()
 
-        sequence = [[
-            model_name, train_dataset_noise, test_dataset_noise, values[0][0], values[1][0], values[3][0],
-            values[4][0], values[0][1], values[1][1], values[3][1], values[4][1],
-            values[0][2], values[1][2], values[2][0], values[3][2], values[4][2],
-            cm[0][0], cm[0][1], cm[1][0], cm[1][1]
-        ]]
+        pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')
+        matches = pattern.findall(cr)
 
-        pd.concat([df, pd.DataFrame(data=sequence, columns=df.columns)], ignore_index=True) \
+        columns = ['Class', 'Precision', 'Recall', 'F1-Score', 'Support']
+        df = pd.DataFrame(matches, columns=columns).astype(
+            {'Precision': float, 'Recall': float, 'F1-Score': float, 'Support': int})
+
+        accuracy_match = re.search(r'accuracy\s+([\d.]+)', cr)
+        accuracy = float(accuracy_match.group(1)) if accuracy_match else None
+
+        classes_precision_dict = {}
+        classes_recall_dict = {}
+        classes_f1score_dict = {}
+        for index, item in enumerate(target_names):
+            classes_precision_dict[f'precision({item})'] = df['Precision'][index]
+            classes_recall_dict[f'recall({item})'] = df['Recall'][index]
+            classes_f1score_dict[f'f1-score({item})'] = df['F1-Score'][index]
+
+        classes_number = len(target_names)
+        metrics = {
+            'train-dataset-noise': train_noise,
+            'test-dataset-noise': test_noise,
+            **classes_precision_dict,
+            'precision(macro-avg)': df['Precision'][classes_number],
+            'precision(weighted-avg)': df['Precision'][classes_number + 1],
+            **classes_recall_dict,
+            'recall(macro-avg)': df['Recall'][classes_number],
+            'recall(weighted-avg)': df['Recall'][classes_number + 1],
+            **classes_f1score_dict,
+            'f1-score(accuracy)': accuracy,
+            'f1-score(macro-avg)': df['F1-Score'][classes_number],
+            'f1-score(weighted-avg)': df['F1-Score'][classes_number + 1],
+        }
+
+        pd.DataFrame(cm).to_csv(
+            self.results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
+        )
+        pd.concat([current_df, pd.DataFrame(metrics, index=[0])], ignore_index=True) \
             .to_csv(self.results_folder + f'/results_{self.results_name}.csv')
 
     def write_execution_folder(self):
@@ -53,7 +78,7 @@ class ResultsWriter:
         os.mkdir(self.results_folder)
 
     def write_model(self, model, model_name):
-        model.save(f'{self.results_folder}/{model_name}.hdf5')
+        model.save(f'{self.results_folder}/{model_name}.keras')
 
     def delete_results(self):
         os.rmdir(self.results_folder)
