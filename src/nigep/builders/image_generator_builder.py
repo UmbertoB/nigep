@@ -1,21 +1,21 @@
 import pandas as pd
+import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 
 
-def get_train_generator(x, y, noise, train_index, batch_size, class_mode, input_shape):
-    x = list(map(lambda p: p.replace('default', f'noise_{noise}'), x))
-    df = pd.DataFrame({'images': x})
-    x = df['images']
+def get_train_generator(x_data, y_data, noise, train_index, batch_size, class_mode, input_shape):
+    x_noisy_data = list(map(lambda p: p.replace('default', f'noise_{noise}'), x_data))
+    x_noisy_data = np.array(x_noisy_data)
 
-    x_train, y_train = x[train_index], y[train_index]
+    x_train, y_train = x_noisy_data[train_index], y_data[train_index]
 
     df_train = pd.DataFrame({'id': x_train, 'label': y_train})
 
     train_gen = ImageDataGenerator(
-        rotation_range=40,
+        # rotation_range=40,
         rescale=1 / 255,
-        horizontal_flip=True,
-        vertical_flip=True,
+        # horizontal_flip=True,
+        # vertical_flip=True,
         validation_split=0.1
     )
 

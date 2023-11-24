@@ -1,13 +1,14 @@
 from sklearn.metrics import classification_report, confusion_matrix
+import numpy as np
 
 
-def get_model_predictions(model, test_generator):
-    predictions = model.predict(test_generator)
-    all_predictions = []
-    for pred in predictions:
-        all_predictions.append((pred[0] > 0.5).astype("int32"))
+def get_model_predictions(model, test_generator, class_mode):
+    predict_x = model.predict(test_generator)
 
-    return all_predictions
+    if class_mode is 'binary':
+        return np.round(predict_x).flatten().astype(int)
+
+    return np.argmax(predict_x, axis=-1)
 
 
 def get_confusion_matrix_and_report(test_generator, predictions, target_names):

@@ -1,6 +1,6 @@
 [project]
 name = "nigep"
-version = "0.0.26"
+version = "0.0.28"
 authors = [
   { name="Umberto Barros", email="umbertobarrosf@gmail.com" },
 ]

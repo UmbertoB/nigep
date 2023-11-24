@@ -64,7 +64,7 @@ class Nigep:
                     train_gen, val_gen = get_train_generator(self.x_data, self.y_data, noise_amount, train_index,
                                                              self.batch_size, self.class_mode, self.input_shape)
 
-                    model_builder.train_model_for_dataset(self.model, self.epochs, self.callbacks, train_gen, val_gen, )
+                    model_builder.train_model_for_dataset(self.model, self.epochs, self.callbacks, train_gen, val_gen)
 
                     rw.write_model(self.model, f'train_{noise_amount}')
 
@@ -73,7 +73,7 @@ class Nigep:
                                                       self.batch_size, self.class_mode, self.input_shape)
                         self.model.evaluate(test_gen)
 
-                        predictions = get_model_predictions(self.model, test_gen)
+                        predictions = get_model_predictions(self.model, test_gen, self.class_mode)
                         cm, cr = get_confusion_matrix_and_report(test_gen, predictions, self.target_names)
 
                         rw.write_metrics_results(
