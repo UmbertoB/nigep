@@ -28,8 +28,6 @@ class Nigep:
                  epochs=10,
                  callbacks=None,
                  ):
-        if callbacks is None:
-            callbacks = []
         self.execution_name = execution_name
         self.model = model
         self.batch_size = batch_size

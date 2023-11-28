@@ -74,7 +74,7 @@ class ResultsWriter:
             .to_csv(self.results_folder + f'/results_{self.results_name}.csv')
 
     def write_execution_folder(self):
-        self.results_folder = f'{self.execution_folder_path}/results_{self.results_name}_{datetime.now().isoformat().__str__()}'
+        self.results_folder = f'{self.execution_folder_path}/kfold_{datetime.now().isoformat().__str__()}'
         os.mkdir(self.results_folder)
 
     def write_model(self, model, model_name):
