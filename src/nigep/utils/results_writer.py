@@ -9,6 +9,16 @@ import seaborn as sns
 from .functions import get_results_columns
 from .mkdir_folders import mkdir_output, get_directory_name
 
+sns.set_theme(style="white")
+sns.set_theme(style="whitegrid")
+sns.set(font_scale=2)
+sns.set_context("paper")
+sns.set(font='serif')
+sns.set_style("white", {
+    "font.family": "serif",
+    "font.serif": ["Times", "Palatino", "serif"]
+})
+
 
 class ResultsWriter:
 
@@ -77,14 +87,13 @@ class ResultsWriter:
         self.results_folder = f'{self.execution_folder_path}/kfold_{datetime.now().isoformat().__str__()}'
         os.mkdir(self.results_folder)
 
-    def write_model(self, model, model_name):
-        model.save(f'{self.results_folder}/{model_name}.keras')
+    def write_model(self, model, noise):
+        model.save(f'{self.results_folder}/train_{noise}.keras')
 
     def delete_results(self):
         os.rmdir(self.results_folder)
 
     def generate_mean_csv(self):
-        sns.set_theme(style="white")
         unified_data = []
         train_noise = []
         test_noise = []
@@ -103,35 +112,23 @@ class ResultsWriter:
 
         mean_df = pd.DataFrame(mean_data)
 
-        mean_df.to_csv(
-            f'{os.getcwd()}/output/{self.results_name}/mean_results.csv')
-
         column_values = mean_df['train-noise'].unique()
-        conf_matrix = []
-
-        for value in column_values:
-            value_df = mean_df[mean_df['train-noise'] == value]
-            conf_matrix.append(value_df['f1-score(weighted-avg)'].to_numpy())
+        conf_matrix = [mean_df.loc[mean_df['train-noise'] == value, 'f1-score(weighted-avg)'].to_numpy()
+                       for value in column_values]
 
         heatmap_df = pd.DataFrame(conf_matrix, columns=column_values, index=column_values)
 
-        sns.set_theme(style="whitegrid")
-        sns.set(font_scale=2)
-        sns.set_context("paper")
-        sns.set(font='serif')
-        sns.set_style("white", {
-            "font.family": "serif",
-            "font.serif": ["Times", "Palatino", "serif"]
-        })
+        mean_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/mean_results.csv')
+        heatmap_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/generalization_profile_heatmap.csv')
 
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(heatmap_df,
-                    cmap='coolwarm',
-                    annot=True,
-                    cbar_kws={'label': '5-Fold F-Score mean vs. 0 Test Noise'},
-                    fmt='.2f')
-
-        plt.xlabel('Test Noise')
-        plt.ylabel('Train Noise')
-
-        plt.savefig(f'{os.getcwd()}/output/{self.results_name}/mean_results_heatmap.png')
+        # plt.figure(figsize=(8, 6))
+        # sns.heatmap(heatmap_df,
+        #             cmap='coolwarm',
+        #             annot=True,
+        #             cbar_kws={'label': '5-Fold F-Score mean vs. 0 Test Noise'},
+        #             fmt='.2f')
+        #
+        # plt.xlabel('Test Noise')
+        # plt.ylabel('Train Noise')
+        #
+        # plt.savefig(f'{os.getcwd()}/output/{self.results_name}/mean_results_heatmap.png')

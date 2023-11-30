@@ -29,8 +29,7 @@ def get_results_columns(target_names):
     ]
 
 
-def noise_datasets_already_exists():
-    noise_levels = [0] + [i / 10 for i in range(1, 10)]
+def noisy_datasets_already_exists(noise_levels):
     for noise_level in noise_levels:
         folder_name = f"noise_{noise_level}"
         folder_path = os.path.join(f'{os.getcwd()}/dataset', folder_name)
