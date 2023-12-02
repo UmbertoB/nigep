@@ -3,8 +3,9 @@ import numpy as np
 
 
 def get_model_predictions(model, test_generator, class_mode):
+    model.evaluate(test_generator)
     predict_x = model.predict(test_generator)
-
+    print(predict_x)
     if class_mode is 'binary':
         return np.round(predict_x).flatten().astype(int)
 

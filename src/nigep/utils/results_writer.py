@@ -121,14 +121,14 @@ class ResultsWriter:
         mean_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/mean_results.csv')
         heatmap_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/generalization_profile_heatmap.csv')
 
-        # plt.figure(figsize=(8, 6))
-        # sns.heatmap(heatmap_df,
-        #             cmap='coolwarm',
-        #             annot=True,
-        #             cbar_kws={'label': '5-Fold F-Score mean vs. 0 Test Noise'},
-        #             fmt='.2f')
-        #
-        # plt.xlabel('Test Noise')
-        # plt.ylabel('Train Noise')
-        #
-        # plt.savefig(f'{os.getcwd()}/output/{self.results_name}/mean_results_heatmap.png')
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(heatmap_df,
+                    cmap='coolwarm',
+                    annot=True,
+                    cbar_kws={'label': '5-Fold F-Score mean vs. 0 Test Noise'},
+                    fmt='.2f')
+
+        plt.xlabel('Test Noise')
+        plt.ylabel('Train Noise')
+
+        plt.savefig(f'{os.getcwd()}/output/{self.results_name}/mean_results_heatmap.png')
