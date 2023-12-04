@@ -1,13 +1,15 @@
 from keras.models import Sequential
 
 
-def train_model_for_dataset(model: Sequential, epochs, callbacks, train_generator, validation_generator):
+def train_model_for_dataset(model: Sequential, train_data, epochs, callbacks):
+    x_train, y_train = train_data
+
     if callbacks is None:
         callbacks = []
 
     history = model.fit(
-        train_generator,
-        validation_data=validation_generator,
+        x_train,
+        y_train,
         callbacks=callbacks,
         epochs=epochs
     )

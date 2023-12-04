@@ -1,6 +1,3 @@
-import os
-
-
 def isfloat(num):
     try:
         float(num)
@@ -27,17 +24,6 @@ def get_results_columns(target_names):
         *classes_f1score_columns,
         'f1-score(accuracy)', 'f1-score(macro-avg)', 'f1-score(weighted-avg)'
     ]
-
-
-def noisy_datasets_already_exists(noise_levels):
-    for noise_level in noise_levels:
-        folder_name = f"noise_{noise_level}"
-        folder_path = os.path.join(f'{os.getcwd()}/dataset', folder_name)
-
-        if not os.path.exists(folder_path):
-            return False
-
-    return True
 
 
 def validate_kwargs(

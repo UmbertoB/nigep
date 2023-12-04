@@ -1,15 +1,13 @@
-import traceback
-
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 
 from .builders import model_builder
-from .builders.dataset_builder import generate_dataset
-from .builders.image_generator_builder import get_train_generator, get_test_generator
+from .builders.image_generator_builder import get_train_data, get_test_data
 from .builders.metrics_builder import get_confusion_matrix_and_report, get_model_predictions
 from .utils.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
 from .utils.results_writer import ResultsWriter
-from .utils.functions import noisy_datasets_already_exists, validate_kwargs
+from .utils.functions import validate_kwargs
+from .layers.salt_and_pepper_noise import SaltAndPepperNoise
 
 
 class Nigep:
@@ -31,12 +29,7 @@ class Nigep:
         self.write_trained_models: bool = kwargs.get('write_trained_models', False)
         self.evaluate_trained_models: bool = kwargs.get('evaluate_trained_models', False)
 
-    def __generate_noisy_datasets(self):
-        for noise_amount in self.noise_levels:
-            dataset_name = f'noise_{noise_amount}'
-            generate_dataset(self.x_data, dataset_name, noise_amount)
-
-    def __train_and_evaluate(self):
+    def execute(self):
         rw = ResultsWriter(self.execution_name)
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=42)
 
@@ -45,32 +38,30 @@ class Nigep:
 
             for noise_amount in self.noise_levels:
 
-                train_gen, val_gen = get_train_generator(self.x_data,
-                                                         self.y_data,
-                                                         self.batch_size,
-                                                         self.class_mode,
-                                                         self.input_shape,
-                                                         noise_amount,
-                                                         train_index)
+                train_data = get_train_data(self.x_data, self.y_data, train_index)
 
-                model_builder.train_model_for_dataset(self.model,
+                nigep_model = Sequential()
+                nigep_model.add(SaltAndPepperNoise(noise_amount, input_shape=(self.input_shape,)))
+                nigep_model.add(self.model)
+
+                nigep_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+                model_builder.train_model_for_dataset(nigep_model,
+                                                      train_data,
                                                       self.epochs,
-                                                      self.callbacks,
-                                                      train_gen,
-                                                      val_gen)
+                                                      self.callbacks)
 
                 if self.write_trained_models:
-                    rw.write_model(self.model, noise_amount)
+                    rw.write_model(nigep_model, noise_amount)
 
                 for noise_amount_testing in self.noise_levels:
-                    test_gen = get_test_generator(self.x_data, self.y_data, self.batch_size, self.class_mode,
-                                                  self.input_shape, noise_amount_testing, test_index)
+                    x_test, y_test = get_test_data(self.x_data, self.y_data, test_index, noise_amount_testing)
 
                     if self.evaluate_trained_models:
-                        self.model.evaluate(test_gen)
+                        nigep_model.evaluate(x_test, y_test)
 
-                    predictions = get_model_predictions(self.model, test_gen, self.class_mode)
-                    cm, cr = get_confusion_matrix_and_report(test_gen, predictions, self.target_names)
+                    predictions = get_model_predictions(nigep_model, x_test, self.class_mode)
+                    cm, cr = get_confusion_matrix_and_report(y_test, predictions, self.target_names)
 
                     rw.write_metrics_results(
                         noise_amount,
@@ -80,11 +71,4 @@ class Nigep:
                         self.target_names
                     )
 
-            rw.generate_mean_csv()
-
-    def execute(self):
-        if not noisy_datasets_already_exists(self.noise_levels):
-            self.__generate_noisy_datasets()
-
-        self.__train_and_evaluate()
-
+        rw.generate_mean_csv()

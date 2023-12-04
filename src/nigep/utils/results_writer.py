@@ -27,22 +27,14 @@ class ResultsWriter:
         self.execution_folder_path = get_directory_name(f'{os.getcwd()}/output/{name}')
         os.mkdir(self.execution_folder_path)
         self.results_folder = '/'
-        self.results_name = name
+        self.results_name = os.path.basename(self.execution_folder_path)
 
     def __generate_df_by_csv(self):
         df = pd.read_csv(self.results_folder + f'/results_{self.results_name}.csv')
         df.drop('Unnamed: 0', axis=1, inplace=True)
         return df
 
-    def __generate_results_csv(self, target_names):
-        pd.DataFrame(columns=get_results_columns(target_names)).to_csv(self.results_folder + f'/results_{self.results_name}.csv')
-
     def write_metrics_results(self, train_noise, test_noise, cr, cm, target_names):
-        if not os.path.isfile(self.results_folder + f'/results_{self.results_name}.csv'):
-            self.__generate_results_csv(target_names)
-
-        current_df = self.__generate_df_by_csv()
-
         pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')
         matches = pattern.findall(cr)
 
@@ -77,11 +69,19 @@ class ResultsWriter:
             'f1-score(weighted-avg)': df['F1-Score'][classes_number + 1],
         }
 
-        pd.DataFrame(cm).to_csv(
-            self.results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
-        )
-        pd.concat([current_df, pd.DataFrame(metrics, index=[0])], ignore_index=True) \
+        if not os.path.isfile(self.results_folder + f'/results_{self.results_name}.csv'):
+            (pd.DataFrame(metrics, index=[0], columns=get_results_columns(target_names))
+             .to_csv(self.results_folder + f'/results_{self.results_name}.csv'))
+            return
+
+        current_df = self.__generate_df_by_csv()
+
+        pd.concat([current_df, pd.DataFrame(metrics, index=[0])]) \
             .to_csv(self.results_folder + f'/results_{self.results_name}.csv')
+
+        # pd.DataFrame(cm).to_csv(
+        #     self.results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
+        # )
 
     def write_execution_folder(self):
         self.results_folder = f'{self.execution_folder_path}/kfold_{datetime.now().isoformat().__str__()}'
@@ -90,13 +90,11 @@ class ResultsWriter:
     def write_model(self, model, noise):
         model.save(f'{self.results_folder}/train_{noise}.keras')
 
-    def delete_results(self):
-        os.rmdir(self.results_folder)
-
     def generate_mean_csv(self):
         unified_data = []
         train_noise = []
         test_noise = []
+        print(f'{os.getcwd()}/output/{self.results_name}')
         for subdir, _, files in os.walk(f'{os.getcwd()}/output/{self.results_name}'):
             for file in files:
                 if file.endswith('.csv') and file.startswith('results'):

@@ -1,12 +1,6 @@
 import os
 
 
-def mkdir_dataset(new_dataset_folder_name):
-    new_dataset_folder_path = f'{os.getcwd()}/dataset/{new_dataset_folder_name}'
-    if not os.path.exists(new_dataset_folder_path):
-        os.mkdir(new_dataset_folder_path)
-
-
 def mkdir_output():
     output_folder_path = f'{os.getcwd()}/output'
 
