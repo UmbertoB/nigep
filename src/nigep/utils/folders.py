@@ -13,7 +13,7 @@ def mkdir_output():
 
 
 def get_directory_name(name, x=0):
-    dir_name = (name + (' ' + str(x) if x != 0 else '')).strip()
+    dir_name = (name + ('_' + str(x) if x != 0 else '')).strip()
     if not os.path.exists(dir_name):
         return dir_name
     else:

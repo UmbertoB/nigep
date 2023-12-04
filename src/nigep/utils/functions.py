@@ -1,11 +1,3 @@
-def isfloat(num):
-    try:
-        float(num)
-        return True
-    except ValueError:
-        return False
-
-
 def get_results_columns(target_names):
     classes_precision_columns = []
     classes_recall_columns = []

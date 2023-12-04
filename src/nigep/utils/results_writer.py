@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 from .functions import get_results_columns
-from .mkdir_folders import mkdir_output, get_directory_name
+from .folders import mkdir_output, get_directory_name
 
 sns.set_theme(style="white")
 sns.set_theme(style="whitegrid")
@@ -26,15 +26,26 @@ class ResultsWriter:
         mkdir_output()
         self.execution_folder_path = get_directory_name(f'{os.getcwd()}/output/{name}')
         os.mkdir(self.execution_folder_path)
-        self.results_folder = '/'
         self.results_name = os.path.basename(self.execution_folder_path)
+        self.results_folder = '/'
+
+        self.heatmap_df = None
+        self.mean_merged_df = None
 
     def __generate_df_by_csv(self):
         df = pd.read_csv(self.results_folder + f'/results_{self.results_name}.csv')
         df.drop('Unnamed: 0', axis=1, inplace=True)
         return df
 
-    def write_metrics_results(self, train_noise, test_noise, cr, cm, target_names):
+    def write_k_subset_folder(self, fold_number):
+        self.results_folder = \
+            f'{self.execution_folder_path}/kfold_{fold_number}__{datetime.now().isoformat().__str__()}'
+        os.mkdir(self.results_folder)
+
+    def write_model(self, model, noise):
+        model.save(f'{self.results_folder}/train_{noise}.keras')
+
+    def write_new_metrics(self, train_noise, test_noise, cr, cm, target_names):
         pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')
         matches = pattern.findall(cr)
 
@@ -83,18 +94,10 @@ class ResultsWriter:
         #     self.results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
         # )
 
-    def write_execution_folder(self):
-        self.results_folder = f'{self.execution_folder_path}/kfold_{datetime.now().isoformat().__str__()}'
-        os.mkdir(self.results_folder)
-
-    def write_model(self, model, noise):
-        model.save(f'{self.results_folder}/train_{noise}.keras')
-
-    def generate_mean_csv(self):
+    def save_mean_merged_results(self):
         unified_data = []
         train_noise = []
         test_noise = []
-        print(f'{os.getcwd()}/output/{self.results_name}')
         for subdir, _, files in os.walk(f'{os.getcwd()}/output/{self.results_name}'):
             for file in files:
                 if file.endswith('.csv') and file.startswith('results'):
@@ -105,25 +108,35 @@ class ResultsWriter:
                     test_noise = csv['test-dataset-noise']
 
         merged_df = pd.concat(unified_data, axis=1)
-        mean_data = {'train-noise': train_noise, 'test-noise': test_noise,
-                     'f1-score(weighted-avg)': merged_df.mean(axis=1)}
 
-        mean_df = pd.DataFrame(mean_data)
+        mean_merged_data = {
+            'train-noise': train_noise,
+            'test-noise': test_noise,
+            'f1-score(weighted-avg)': merged_df.mean(axis=1)
+        }
 
-        column_values = mean_df['train-noise'].unique()
-        conf_matrix = [mean_df.loc[mean_df['train-noise'] == value, 'f1-score(weighted-avg)'].to_numpy()
-                       for value in column_values]
+        self.mean_merged_df = pd.DataFrame(mean_merged_data)
 
-        heatmap_df = pd.DataFrame(conf_matrix, columns=column_values, index=column_values)
+        self.mean_merged_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/mean_results.csv')
 
-        mean_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/mean_results.csv')
-        heatmap_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/generalization_profile_heatmap.csv')
+    def save_heatmap_csv(self):
+        column_values = self.mean_merged_df['train-noise'].unique()
 
+        results_matrix = [
+            self.mean_merged_df.loc[
+                self.mean_merged_df['train-noise'] == value, 'f1-score(weighted-avg)'
+            ].to_numpy() for value in column_values
+        ]
+
+        self.heatmap_df = pd.DataFrame(results_matrix, columns=column_values, index=column_values)
+        self.heatmap_df.to_csv(f'{os.getcwd()}/output/{self.results_name}/generalization_profile_heatmap.csv')
+
+    def plot_and_save_heatmap_png(self):
         plt.figure(figsize=(8, 6))
-        sns.heatmap(heatmap_df,
+        sns.heatmap(self.heatmap_df,
                     cmap='coolwarm',
                     annot=True,
-                    cbar_kws={'label': '5-Fold F-Score mean vs. 0 Test Noise'},
+                    cbar_kws={'label': '5-Fold mean values of F-Score'},
                     fmt='.2f')
 
         plt.xlabel('Test Noise')
