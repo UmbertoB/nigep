@@ -13,6 +13,6 @@ NIGEP_AVAILABLE_KWARGS = [
     'epochs',
     'callbacks',
     'noise_levels',
-    'write_trained_models',
-    'evaluate_trained_models',
+    'save_models',
+    'evaluate_models',
 ]

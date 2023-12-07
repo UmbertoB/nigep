@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from .functions import get_results_columns
-from .folders import mkdir_output, get_directory_name
+from src.nigep.utils.functions import get_results_columns
+from src.nigep.utils.folders import mkdir_output, get_directory_name
 
 sns.set_theme(style="white")
 sns.set_theme(style="whitegrid")
@@ -42,8 +42,9 @@ class ResultsWriter:
             f'{self.execution_folder_path}/kfold_{fold_number}__{datetime.now().isoformat().__str__()}'
         os.mkdir(self.results_folder)
 
-    def write_model(self, model, noise):
-        model.save(f'{self.results_folder}/train_{noise}.keras')
+    def write_model(self, save_model, model, noise):
+        if save_model:
+            model.save(f'{self.results_folder}/train_{noise}.keras')
 
     def write_new_metrics(self, train_noise, test_noise, cr, cm, target_names):
         pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')

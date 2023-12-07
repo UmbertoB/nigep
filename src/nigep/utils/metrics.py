@@ -16,3 +16,9 @@ def get_confusion_matrix_and_report(y_test, predictions, target_names):
     cm = confusion_matrix(y_true, predictions)
     cr = classification_report(y_true, predictions, target_names=target_names, labels=np.arange(0,len(target_names),1))
     return cm, cr
+
+
+def compute_metrics(model, class_mode, target_names, x_test, y_test):
+    predictions = get_model_predictions(model, x_test, class_mode)
+    cm, cr = get_confusion_matrix_and_report(y_test, predictions, target_names)
+    return cr, cm, target_names
