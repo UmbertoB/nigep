@@ -1,3 +1,4 @@
+import joblib
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 
@@ -74,12 +75,17 @@ class Nigep:
 
     def fit(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
-        dataset_splits = enumerate(kf.split(self.x_data, self.y_data))
+        dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        for fold_number, (train_index, test_index) in dataset_splits:
+        def process_fold(fold_number, indices):
+            train_index, test_index = indices
             self.rw.write_k_subset_folder(fold_number)
-
             self.execute_fold(train_index, test_index)
+
+        joblib.Parallel(n_jobs=2)(
+            joblib.delayed(process_fold)(fold_number, indices)
+            for fold_number, indices in dataset_splits
+        )
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()

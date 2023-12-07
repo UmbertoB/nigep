@@ -21,4 +21,4 @@ def get_confusion_matrix_and_report(y_test, predictions, target_names):
 def compute_metrics(model, class_mode, target_names, x_test, y_test):
     predictions = get_model_predictions(model, x_test, class_mode)
     cm, cr = get_confusion_matrix_and_report(y_test, predictions, target_names)
-    return cr, cm, target_names
+    return cm, cr
