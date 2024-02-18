@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from src.nigep.utils.functions import get_results_columns
-from src.nigep.utils.folders import mkdir_output, get_directory_name
+from src.nigep.lib.functions import get_results_columns
+from src.nigep.lib.folders import mkdir_output, get_directory_name
 
 sns.set_theme(style="white")
 sns.set_theme(style="whitegrid")

@@ -2,12 +2,12 @@ import joblib
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 
-from .utils.apply_noise import apply_noise
-from .utils.metrics import compute_metrics
-from .utils.train_model import train_model
-from .utils.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
+from .lib.apply_noise import apply_noise
+from .lib.metrics import compute_metrics
+from .lib.train_model import train_model
+from .lib.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
 from src.nigep.classes.results_writer import ResultsWriter
-from .utils.functions import validate_kwargs
+from .lib.functions import validate_kwargs
 
 
 class Nigep:
