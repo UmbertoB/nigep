@@ -1,5 +1,4 @@
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.preprocessing import label_binarize
 import numpy as np
 
 
