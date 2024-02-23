@@ -6,7 +6,7 @@ from .lib.apply_noise import apply_noise
 from .lib.metrics import compute_metrics
 from .lib.train_model import train_model
 from .lib.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
-from src.nigep.classes.results_writer import ResultsWriter
+from .classes.results_writer import ResultsWriter
 from .lib.functions import validate_kwargs
 
 
