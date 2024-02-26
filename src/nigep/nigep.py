@@ -51,11 +51,11 @@ class Nigep:
         self.kfold_random_state: int = kwargs.get('kfold_random_state', 42)
         self.rw = ResultsWriter(self.execution_name)
 
-    def train_and_write_model(self, train_data, train_noise):
+    def __train_and_write_model(self, train_data, train_noise):
         train_model(self.model, self.epochs, self.callbacks, train_data)
         self.rw.write_model(self.save_models, self.model, train_noise)
 
-    def test_and_write_metrics(self, test_index, train_noise):
+    def __test_and_write_metrics(self, test_index, train_noise):
         for test_noise in self.noise_levels:
             x_test, y_test = apply_noise(self.x_data, self.y_data, test_index, test_noise)
 
@@ -65,27 +65,32 @@ class Nigep:
             cm, cr = compute_metrics(self.model, self.class_mode, self.target_names, x_test, y_test)
             self.rw.write_new_metrics(train_noise, test_noise, cr, cm, self.target_names)
 
-    def execute_fold(self, train_index, test_index):
+    def __execute_fold(self, train_index, test_index):
         for train_noise in self.noise_levels:
             noised_data = apply_noise(self.x_data, self.y_data, train_index, train_noise)
 
-            self.train_and_write_model(noised_data, train_noise)
+            self.__train_and_write_model(noised_data, train_noise)
 
-            self.test_and_write_metrics(test_index, train_noise)
+            self.__test_and_write_metrics(test_index, train_noise)
 
     def fit(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        def process_fold(fold_number, indices):
-            train_index, test_index = indices
+        for fold_number, (train_index, test_index) in dataset_splits:
             self.rw.write_k_subset_folder(fold_number)
-            self.execute_fold(train_index, test_index)
 
-        joblib.Parallel(n_jobs=2)(
-            joblib.delayed(process_fold)(fold_number, indices)
-            for fold_number, indices in dataset_splits
-        )
+            self.__execute_fold(train_index, test_index)
+
+        # def process_fold(fold_number, indices):
+        #     train_index, test_index = indices
+        #     self.rw.write_k_subset_folder(fold_number)
+        #     self.execute_fold(train_index, test_index)
+        #
+        # joblib.Parallel(n_jobs=2)(
+        #     joblib.delayed(process_fold)(fold_number, indices)
+        #     for fold_number, indices in dataset_splits
+        # )
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()
