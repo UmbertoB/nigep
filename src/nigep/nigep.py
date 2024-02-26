@@ -1,5 +1,6 @@
 from keras.models import Sequential
 from sklearn.model_selection import KFold
+import logging
 
 from .lib.apply_noise import apply_noise
 from .lib.metrics import compute_metrics
@@ -51,11 +52,13 @@ class Nigep:
         self.rw = ResultsWriter(self.execution_name)
 
     def __train_and_write_model(self, train_data, train_noise):
+        logging.info(f'Training data with {train_noise} of noise')
         train_model(self.model, self.epochs, self.callbacks, train_data)
         self.rw.write_model(self.save_models, self.model, train_noise)
 
     def __test_and_write_metrics(self, test_index, train_noise):
         for test_noise in self.noise_levels:
+            logging.info(f'Testing data with {test_noise} of noise')
             x_test, y_test = apply_noise(self.x_data, self.y_data, test_index, test_noise)
 
             if self.evaluate_models:
