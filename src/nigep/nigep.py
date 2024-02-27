@@ -1,7 +1,6 @@
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 import logging
-import joblib
 
 from .lib.apply_noise import apply_noise
 from .lib.metrics import compute_metrics
@@ -80,15 +79,10 @@ class Nigep:
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        def process_fold(fold_number, indices):
-            train_index, test_index = indices
+        for fold_number, (train_index, test_index) in dataset_splits:
             self.rw.write_k_subset_folder(fold_number)
-            self.__execute_fold(train_index, test_index)
 
-        joblib.Parallel(n_jobs=2)(
-            joblib.delayed(process_fold)(fold_number, indices)
-            for fold_number, indices in dataset_splits
-        )
+            self.__execute_fold(train_index, test_index)
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()
