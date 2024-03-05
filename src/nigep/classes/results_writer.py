@@ -27,26 +27,27 @@ class ResultsWriter:
         self.execution_folder_path = get_directory_name(f'{os.getcwd()}/output/{name}')
         os.mkdir(self.execution_folder_path)
         self.results_name = os.path.basename(self.execution_folder_path)
-        self.results_folder = '/'
 
         self.heatmap_df = None
         self.mean_merged_df = None
 
-    def __generate_df_by_csv(self):
-        df = pd.read_csv(self.results_folder + f'/results_{self.results_name}.csv')
+    def __generate_df_by_csv(self, results_folder):
+        df = pd.read_csv(results_folder + f'/results_{self.results_name}.csv')
         df.drop('Unnamed: 0', axis=1, inplace=True)
         return df
 
     def write_k_subset_folder(self, fold_number):
-        self.results_folder = \
+        results_folder = \
             f'{self.execution_folder_path}/kfold_{fold_number}__{datetime.now().isoformat().__str__()}'
-        os.mkdir(self.results_folder)
+        os.mkdir(results_folder)
 
-    def write_model(self, save_model, model, noise):
+        return results_folder
+
+    def write_model(self, results_folder, save_model, model, noise):
         if save_model:
-            model.save(f'{self.results_folder}/train_{noise}.keras')
+            model.save(f'{results_folder}/train_{noise}.keras')
 
-    def write_new_metrics(self, train_noise, test_noise, cr, cm, target_names):
+    def write_new_metrics(self, results_folder, train_noise, test_noise, cr, cm, target_names):
         pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')
         matches = pattern.findall(cr)
 
@@ -81,18 +82,18 @@ class ResultsWriter:
             'f1-score(weighted-avg)': df['F1-Score'][classes_number + 1],
         }
 
-        if not os.path.isfile(self.results_folder + f'/results_{self.results_name}.csv'):
+        if not os.path.isfile(results_folder + f'/results_{self.results_name}.csv'):
             (pd.DataFrame(metrics, index=[0], columns=get_results_columns(target_names))
-             .to_csv(self.results_folder + f'/results_{self.results_name}.csv'))
+             .to_csv(results_folder + f'/results_{self.results_name}.csv'))
             return
 
         current_df = self.__generate_df_by_csv()
 
         pd.concat([current_df, pd.DataFrame(metrics, index=[0])]) \
-            .to_csv(self.results_folder + f'/results_{self.results_name}.csv')
+            .to_csv(results_folder + f'/results_{self.results_name}.csv')
 
         # pd.DataFrame(cm).to_csv(
-        #     self.results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
+        #     results_folder + f'/train_{train_noise}_test_{test_noise}_confusion_matrix.csv'
         # )
 
     def save_mean_merged_results(self):

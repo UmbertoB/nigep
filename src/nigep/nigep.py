@@ -1,6 +1,5 @@
 from keras.models import Sequential
 from sklearn.model_selection import KFold
-import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from .lib.apply_noise import apply_noise
@@ -52,42 +51,37 @@ class Nigep:
         self.kfold_random_state: int = kwargs.get('kfold_random_state', 42)
         self.rw = ResultsWriter(self.execution_name)
 
-    def __train_and_write_model(self, train_data, train_noise):
-        logging.info(f'Training data with {train_noise} of noise')
+    def __train_and_write_model(self, results_folder, train_data, train_noise):
         train_model(self.model, self.epochs, self.callbacks, train_data)
-        self.rw.write_model(self.save_models, self.model, train_noise)
+        self.rw.write_model(results_folder, self.save_models, self.model, train_noise)
 
-    def __test_and_write_metrics(self, test_index, train_noise):
+    def __test_and_write_metrics(self, results_folder, test_index, train_noise):
         for test_noise in self.noise_levels:
-            logging.info(f'Testing data with {test_noise} of noise')
             x_test, y_test = apply_noise(self.x_data, self.y_data, test_index, test_noise)
 
             if self.evaluate_models:
                 self.model.evaluate(x_test, y_test)
 
             cm, cr = compute_metrics(self.model, self.class_mode, self.target_names, x_test, y_test)
-            self.rw.write_new_metrics(train_noise, test_noise, cr, cm, self.target_names)
+            self.rw.write_new_metrics(results_folder, train_noise, test_noise, cr, cm, self.target_names)
 
-    def __execute_fold(self, train_index, test_index):
+    def __execute_fold(self, fold_number, train_index, test_index):
+        results_folder = self.rw.write_k_subset_folder(fold_number)
+
         for train_noise in self.noise_levels:
             noised_data = apply_noise(self.x_data, self.y_data, train_index, train_noise)
 
-            self.__train_and_write_model(noised_data, train_noise)
+            self.__train_and_write_model(results_folder, noised_data, train_noise)
 
-            self.__test_and_write_metrics(test_index, train_noise)
+            self.__test_and_write_metrics(results_folder, test_index, train_noise)
 
     def fit(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        def process_noise_level(fold_number, train_index, test_index):
-            self.rw.write_k_subset_folder(fold_number)
-
-            self.__execute_fold(train_index, test_index)
-
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(
-                process_noise_level, fold_number, train_index, test_index)
+                self.__execute_fold, fold_number, train_index, test_index)
                 for fold_number, (train_index, test_index)
                 in dataset_splits
             ]
