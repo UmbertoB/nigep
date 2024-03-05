@@ -43,10 +43,6 @@ class ResultsWriter:
 
         return results_folder
 
-    def write_model(self, results_folder, save_model, model, noise):
-        if save_model:
-            model.save(f'{results_folder}/train_{noise}.keras')
-
     def write_new_metrics(self, results_folder, train_noise, test_noise, cr, cm, target_names):
         pattern = re.compile(r'(\w+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)')
         matches = pattern.findall(cr)
@@ -87,7 +83,7 @@ class ResultsWriter:
              .to_csv(results_folder + f'/results_{self.results_name}.csv'))
             return
 
-        current_df = self.__generate_df_by_csv()
+        current_df = self.__generate_df_by_csv(results_folder)
 
         pd.concat([current_df, pd.DataFrame(metrics, index=[0])]) \
             .to_csv(results_folder + f'/results_{self.results_name}.csv')

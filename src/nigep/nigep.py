@@ -7,7 +7,7 @@ from .lib.metrics import compute_metrics
 from .lib.train_model import train_model
 from .lib.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
 from .classes.results_writer import ResultsWriter
-from .lib.functions import validate_kwargs
+from .lib.functions import validate_kwargs, write_model
 
 
 class Nigep:
@@ -53,7 +53,7 @@ class Nigep:
 
     def __train_and_write_model(self, results_folder, train_data, train_noise):
         train_model(self.model, self.epochs, self.callbacks, train_data)
-        self.rw.write_model(results_folder, self.save_models, self.model, train_noise)
+        write_model(results_folder, self.save_models, self.model, train_noise)
 
     def __test_and_write_metrics(self, results_folder, test_index, train_noise):
         for test_noise in self.noise_levels:

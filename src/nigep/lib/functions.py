@@ -25,3 +25,9 @@ def validate_kwargs(
     for kwarg in kwargs:
         if kwarg not in allowed_kwargs:
             raise TypeError(error_message, kwarg)
+
+
+def write_model(results_folder, save_model, model, noise):
+    if save_model:
+        model.save(f'{results_folder}/train_{noise}.keras')
+
