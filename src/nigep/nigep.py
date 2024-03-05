@@ -71,17 +71,23 @@ class Nigep:
         for train_noise in self.noise_levels:
             noised_data = apply_noise(self.x_data, self.y_data, train_index, train_noise)
 
+            print('TRAINING FOLD ' + fold_number)
             self.__train_and_write_model(results_folder, noised_data, train_noise)
 
+            print('TESTING FOLD ' + fold_number)
             self.__test_and_write_metrics(results_folder, test_index, train_noise)
 
     def fit(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
+        def execute(fold_number, train_index, test_index):
+            print('EXECUTING FOLD ' + fold_number)
+            self.__execute_fold(fold_number, train_index, test_index)
+
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = [executor.submit(
-                self.__execute_fold, fold_number, train_index, test_index)
+                execute, fold_number, train_index, test_index)
                 for fold_number, (train_index, test_index)
                 in dataset_splits
             ]
