@@ -79,7 +79,7 @@ class Nigep:
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             futures = [executor.submit(
                 self.__execute_fold, fold_number, train_index, test_index)
                 for fold_number, (train_index, test_index)
