@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from .lib.apply_noise import apply_noise
 from .lib.metrics import compute_metrics
@@ -79,10 +80,20 @@ class Nigep:
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        for fold_number, (train_index, test_index) in dataset_splits:
+        def process_noise_level(fold_number, train_index, test_index):
             self.rw.write_k_subset_folder(fold_number)
 
             self.__execute_fold(train_index, test_index)
+
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(
+                process_noise_level, fold_number, train_index, test_index)
+                for fold_number, (train_index, test_index)
+                in dataset_splits
+            ]
+
+            for future in futures:
+                future.result()
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()

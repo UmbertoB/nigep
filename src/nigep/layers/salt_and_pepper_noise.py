@@ -9,6 +9,7 @@ class SaltAndPepperNoise(Layer):
         self.supports_masking = True
         self.ratio = ratio
 
+    @override
     def call(self, inputs):
         def noised():
             shp = K.shape(inputs)[1:]
