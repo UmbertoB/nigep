@@ -51,12 +51,16 @@ class Nigep:
         self.kfold_random_state: int = kwargs.get('kfold_random_state', 42)
         self.rw = ResultsWriter(self.execution_name)
 
-    def __train_and_write_model(self, results_folder, train_data, train_noise):
+    def __train_and_write_model(self, results_folder, fold_number, train_data, train_noise):
+        print(f'Fold: {str(fold_number)} - Training with Noise: {str(train_noise)}')
+
         train_model(self.model, self.epochs, self.callbacks, train_data)
         write_model(results_folder, self.save_models, self.model, train_noise)
 
-    def __test_and_write_metrics(self, results_folder, test_index, train_noise):
+    def __test_and_write_metrics(self, results_folder, fold_number, test_index, train_noise):
         for test_noise in self.noise_levels:
+            print(f'Fold: {str(fold_number)} - Train Noise: {str(train_noise)} - Test Noise: {str(test_noise)}')
+
             x_test, y_test = apply_noise(self.x_data, self.y_data, test_index, test_noise)
 
             if self.evaluate_models:
@@ -71,18 +75,16 @@ class Nigep:
         for train_noise in self.noise_levels:
             noised_data = apply_noise(self.x_data, self.y_data, train_index, train_noise)
 
-            print('TRAINING FOLD ' + fold_number)
-            self.__train_and_write_model(results_folder, noised_data, train_noise)
+            self.__train_and_write_model(results_folder, fold_number, noised_data, train_noise)
 
-            print('TESTING FOLD ' + fold_number)
-            self.__test_and_write_metrics(results_folder, test_index, train_noise)
+            self.__test_and_write_metrics(results_folder, fold_number, test_index, train_noise)
 
     def fit(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
         def execute(fold_number, train_index, test_index):
-            print('EXECUTING FOLD ' + fold_number)
+            print('EXECUTING FOLD ' + str(fold_number))
             self.__execute_fold(fold_number, train_index, test_index)
 
         with ThreadPoolExecutor(max_workers=2) as executor:
