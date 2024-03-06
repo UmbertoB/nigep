@@ -1,6 +1,7 @@
 from keras.models import Sequential
 from sklearn.model_selection import KFold
 from concurrent.futures import ThreadPoolExecutor
+import threading
 
 from .lib.apply_noise import apply_noise
 from .lib.metrics import compute_metrics
@@ -13,6 +14,7 @@ from .lib.functions import validate_kwargs, write_model
 class Nigep:
 
     def __init__(self, **kwargs):
+        self.lock = threading.Lock()
         """
         Initialize Nigep instance.
 
@@ -54,8 +56,9 @@ class Nigep:
     def __train_and_write_model(self, results_folder, fold_number, train_data, train_noise):
         print(f'Fold: {str(fold_number)} - Training with Noise: {str(train_noise)}')
 
-        train_model(self.model, self.epochs, self.callbacks, train_data)
-        write_model(results_folder, self.save_models, self.model, train_noise)
+        with self.lock:
+            train_model(self.model, self.epochs, self.callbacks, train_data)
+            write_model(results_folder, self.save_models, self.model, train_noise)
 
     def __test_and_write_metrics(self, results_folder, fold_number, test_index, train_noise):
         for test_noise in self.noise_levels:
