@@ -3,7 +3,7 @@ import numpy as np
 
 
 def get_model_predictions(model, x_test, class_mode):
-    predict_x = model.predict(x_test)
+    predict_x = model.predict(x_test, verbose=0)
     if class_mode == 'binary':
         return np.round(predict_x).flatten().astype(int)
 
