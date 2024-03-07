@@ -59,7 +59,7 @@ class NigepOOD:
         print(f'Training with Noise: {str(train_noise)}')
 
         with self.lock:
-            train_model(self.model, self.epochs, self.callbacks, train_data)
+            train_model(self.model, self.epochs, self.callbacks, train_data, verbose=1)
             write_model(results_folder, self.save_models, self.model, train_noise)
 
     def __out_of_distribution_evaluation(self, results_folder, test_noise, train_noise):
@@ -83,15 +83,18 @@ class NigepOOD:
         self.__out_of_distribution_evaluation(results_folder, noise_level)
 
     def execute(self):
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [executor.submit(
-                self.__execute, noise_level)
-                for noise_level
-                in self.noise_levels
-            ]
+        for noise_level in self.noise_levels:
+            self.__execute(noise_level)
 
-            for future in futures:
-                future.result()
+        # with ThreadPoolExecutor(max_workers=2) as executor:
+        #     futures = [executor.submit(
+        #         self.__execute, noise_level)
+        #         for noise_level
+        #         in self.noise_levels
+        #     ]
+        #
+        #     for future in futures:
+        #         future.result()
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()
