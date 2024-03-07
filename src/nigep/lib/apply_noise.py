@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def apply_noise(x_data, y_data, index, noise_amount):
+def apply_indexed_noise(x_data, y_data, index, noise_amount):
     xx_data, yy_data = x_data[index], y_data[index]
 
     for idx, img in enumerate(xx_data):
@@ -15,4 +15,18 @@ def apply_noise(x_data, y_data, index, noise_amount):
         xx_data[idx] = img_noised
 
     return xx_data, yy_data
+
+
+def apply_noise(x_data, y_data, noise_amount):
+    for idx, img in enumerate(x_data):
+        img_size = img.size
+        noise_percentage = noise_amount
+        noise_size = int(noise_percentage * img_size)
+        random_indices = np.random.choice(img_size, noise_size)
+        img_noised = img.copy()
+        noise = np.random.choice([img.min(), img.max()], noise_size)
+        img_noised.flat[random_indices] = noise
+        x_data[idx] = img_noised
+
+    return x_data, y_data
 
