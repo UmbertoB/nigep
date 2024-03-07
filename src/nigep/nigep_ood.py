@@ -65,7 +65,7 @@ class NigepOOD:
     def __out_of_distribution_evaluation(self, results_folder, test_noise, train_noise):
         print(f'Out of Distribution Evaluation: {str(train_noise)} - Test Noise: {str(test_noise)}')
 
-        x_test, y_test = apply_noise(self.x_data, self.y_data, test_noise)
+        x_test, y_test = apply_noise(self.ood_x_data, self.ood_y_data, test_noise)
 
         if self.evaluate_models:
             self.model.evaluate(x_test, y_test)
