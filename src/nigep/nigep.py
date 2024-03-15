@@ -72,7 +72,6 @@ class Nigep:
             cm, cr = compute_metrics(self.model, self.class_mode, self.target_names, x_test, y_test)
             self.rw.write_new_metrics(results_folder, train_noise, test_noise, cr, cm, self.target_names)
 
-
     def __execute_fold(self, fold_number, train_index, test_index):
         results_folder = self.rw.write_k_subset_folder(fold_number)
 
@@ -83,7 +82,7 @@ class Nigep:
 
             self.__test_and_write_metrics(results_folder, fold_number, test_index, train_noise)
 
-    def fit(self):
+    def execute(self):
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
