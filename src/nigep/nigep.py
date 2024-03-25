@@ -2,8 +2,9 @@ from keras.models import Sequential
 from sklearn.model_selection import KFold
 from concurrent.futures import ThreadPoolExecutor
 import threading
+import numpy as np
 
-from .lib.apply_noise import apply_noise
+from .lib.apply_noise import apply_speckle_noise
 from .lib.metrics import compute_metrics
 from .lib.train_model import train_model
 from .lib.consts import NOISE_LEVELS, NIGEP_AVAILABLE_KWARGS
@@ -42,7 +43,7 @@ class Nigep:
         self.input_shape: tuple[int, int] = kwargs['input_shape']
         self.x_data: list[any] = kwargs['x_data']
         self.y_data: list[any] = kwargs['y_data']
-        self.target_names: list[str] = kwargs.get('target_names', None)
+        self.target_names: list[str] = kwargs.get('target_names', [])
         self.class_mode: str = kwargs.get('class_mode', 'categorical')
         self.k_fold_n: int = kwargs.get('k_fold_n', 5)
         self.epochs: int = kwargs.get('epochs', 10)
@@ -64,21 +65,31 @@ class Nigep:
         for test_noise in self.noise_levels:
             print(f'Fold: {str(fold_number)} - Train Noise: {str(train_noise)} - Test Noise: {str(test_noise)}')
 
-            x_test, y_test = apply_noise(self.x_data, self.y_data, test_index, test_noise)
+            test_generator = apply_speckle_noise(
+                self.x_data[test_index],
+                self.y_data[test_index],
+                test_index,
+                test_noise
+            )
 
             if self.evaluate_models:
-                self.model.evaluate(x_test, y_test)
+                self.model.evaluate(test_generator)
 
-            cm, cr = compute_metrics(self.model, self.class_mode, self.target_names, x_test, y_test)
+            cm, cr = compute_metrics(self.model, self.target_names, test_generator, self.y_data[test_index])
             self.rw.write_new_metrics(results_folder, train_noise, test_noise, cr, cm, self.target_names)
 
     def __execute_fold(self, fold_number, train_index, test_index):
         results_folder = self.rw.write_k_subset_folder(fold_number)
 
         for train_noise in self.noise_levels:
-            noised_data = apply_noise(self.x_data, self.y_data, train_index, train_noise)
+            train_generator = apply_speckle_noise(
+                self.x_data[train_index],
+                self.y_data[train_index],
+                self.batch_size,
+                train_noise
+            )
 
-            self.__train_and_write_model(results_folder, fold_number, noised_data, train_noise)
+            self.__train_and_write_model(results_folder, fold_number, train_generator, train_noise)
 
             self.__test_and_write_metrics(results_folder, fold_number, test_index, train_noise)
 
@@ -86,15 +97,17 @@ class Nigep:
         kf = KFold(n_splits=self.k_fold_n, shuffle=True, random_state=self.kfold_random_state)
         dataset_splits = list(enumerate(kf.split(self.x_data, self.y_data)))
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [executor.submit(
-                self.__execute_fold, fold_number, train_index, test_index)
-                for fold_number, (train_index, test_index)
-                in dataset_splits
-            ]
-
-            for future in futures:
-                future.result()
+        for fold_number, (train_index, test_index) in dataset_splits:
+            self.__execute_fold(fold_number, train_index, test_index)
+        # with ThreadPoolExecutor(max_workers=1) as executor:
+        #     futures = [executor.submit(
+        #         self.__execute_fold, fold_number, train_index, test_index)
+        #         for fold_number, (train_index, test_index)
+        #         in dataset_splits
+        #     ]
+        #
+        #     for future in futures:
+        #         future.result()
 
         self.rw.save_mean_merged_results()
         self.rw.save_heatmap_csv()

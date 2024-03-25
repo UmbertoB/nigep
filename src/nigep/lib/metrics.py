@@ -2,11 +2,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
 
 
-def get_model_predictions(model, x_test, class_mode):
-    predict_x = model.predict(x_test, verbose=0)
-    if class_mode == 'binary':
-        return np.round(predict_x).flatten().astype(int)
-
+def get_model_predictions(model, x_test):
+    predict_x = model.predict(x_test)
     return np.argmax(predict_x, axis=-1)
 
 
@@ -17,7 +14,7 @@ def get_confusion_matrix_and_report(y_test, predictions, target_names):
     return cm, cr
 
 
-def compute_metrics(model, class_mode, target_names, x_test, y_test):
-    predictions = get_model_predictions(model, x_test, class_mode)
+def compute_metrics(model, target_names, x_test, y_test):
+    predictions = get_model_predictions(model, x_test)
     cm, cr = get_confusion_matrix_and_report(y_test, predictions, target_names)
     return cm, cr

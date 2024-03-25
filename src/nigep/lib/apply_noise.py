@@ -1,4 +1,5 @@
 import numpy as np
+from keras.preprocessing.image import ImageDataGenerator
 
 
 def apply_noise(x_data, y_data, index, noise_amount):
@@ -17,10 +18,21 @@ def apply_noise(x_data, y_data, index, noise_amount):
     return xx_data, yy_data
 
 
-def speckle_noise(image, sigma):
-    row, col, _ = image.shape
-    gauss = np.random.normal(0, sigma, (row, col, 3))
-    noisy = image + image * gauss
-    noisy = np.clip(noisy, 0, 1)
-    return noisy
+def apply_speckle_noise(x_data, y_data, batch_size, noise_level):
+
+    def speckle(image, sigma):
+        gauss = np.random.normal(0, sigma, image.shape)
+        noisy = image + image * gauss
+        return np.clip(noisy, 0, 1)
+
+    def speckle_augmentation(sigma):
+        return lambda x: speckle(x, sigma)
+
+    datagen = ImageDataGenerator(
+        preprocessing_function=speckle_augmentation(sigma=noise_level)
+    )
+
+    generator = datagen.flow(x_data, y_data, batch_size)
+
+    return generator
 
