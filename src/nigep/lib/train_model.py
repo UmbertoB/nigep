@@ -12,4 +12,3 @@ def train_model(model: Sequential, epochs, callbacks, train_data, verbose=0):
         epochs=epochs,
         validation_split=.1,
     )
-

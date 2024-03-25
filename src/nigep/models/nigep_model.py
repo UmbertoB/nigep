@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from ..lib.apply_noise import apply_indexed_noise
+from ..lib.apply_noise import apply_noise
 from ..lib.metrics import compute_metrics
 from ..lib.train_model import train_model
 from ..lib.functions import write_model
@@ -32,7 +32,7 @@ class NigepModel(BaseEstimator, TransformerMixin):
         self.save_models = save_models
 
     def fit(self, X, y=None):
-        noised_data = apply_indexed_noise(X, y, self.train_index, self.train_noise)
+        noised_data = apply_noise(X, y, self.train_index, self.train_noise)
 
         print(f'Fold: {str(self.fold_number)} - Training with Noise: {str(self.train_noise)}')
 
@@ -44,7 +44,7 @@ class NigepModel(BaseEstimator, TransformerMixin):
     def evaluate_model(self, X, y, test_index, test_noise):
         print(f'Fold: {str(self.fold_number)} - Train Noise: {str(self.train_noise)} - Test Noise: {str(test_noise)}')
 
-        x_test, y_test = apply_indexed_noise(X, y, test_index, test_noise)
+        x_test, y_test = apply_noise(X, y, test_index, test_noise)
 
         if self.evaluate_models:
             self.model.evaluate(x_test, y_test)
