@@ -1,20 +1,13 @@
-def get_results_columns(target_names):
-    classes_precision_columns = []
-    classes_recall_columns = []
-    classes_f1score_columns = []
-    for index, item in enumerate(target_names):
-        classes_precision_columns.append(f'precision({item})')
-        classes_recall_columns.append(f'recall({item})')
-        classes_f1score_columns.append(f'f1-score({item})')
-
+def get_results_columns():
     return [
-        'train-dataset-noise', 'test-dataset-noise',
-        *classes_precision_columns,
-        'precision(macro-avg)', 'precision(weighted-avg)',
-        *classes_recall_columns,
-        'recall(macro-avg)',  'recall(weighted-avg)',
-        *classes_f1score_columns,
-        'f1-score(accuracy)', 'f1-score(macro-avg)', 'f1-score(weighted-avg)'
+        'fold_number',
+        'precision(macro-avg)',
+        'precision(weighted-avg)',
+        'recall(macro-avg)',
+        'recall(weighted-avg)',
+        'f1-score(accuracy)',
+        'f1-score(macro-avg)',
+        'f1-score(weighted-avg)'
     ]
 
 
@@ -27,7 +20,7 @@ def validate_kwargs(
             raise TypeError(error_message, kwarg)
 
 
-def write_model(results_folder, save_model, model, noise):
+def write_model(results_folder, save_model, model):
     if save_model:
-        model.save(f'{results_folder}/train_{noise}.keras')
+        model.save(f'{results_folder}/model.keras')
 

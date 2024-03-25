@@ -7,7 +7,6 @@ def train_model(model: Sequential, epochs, callbacks, train_data, verbose=0):
     model.fit(
         x_train,
         y_train,
-        verbose=verbose,
         callbacks=callbacks,
         epochs=epochs,
         validation_split=.1,
